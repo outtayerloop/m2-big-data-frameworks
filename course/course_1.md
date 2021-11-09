@@ -12,11 +12,19 @@
 
 - **HDFS HA (high availability)** : 2 machines name node dans une archi de prod comme ça si on perd un name node alors reprise d'activité. Si on perd les 2 name nodes (panne réseau par ex) ils ne sont pas perdus physiquement (ils n'ont pas brûlé), on peut les récup, on fait des sauvegardes des file systems (données essentielles niveau OS) des name nodes (volumes de données usqu'au peta octet), facilité d'export
 
-- **Name node** : meta-données, annuaire (infos de distribution des fichiers). Page d'administration avec infos du name node (ex : cluster de l'EFREI) => noms des machines, capacité totale et utilisée, nb data nodes, vue des data nodes, nb de blocs par data node (en théorie même nb de blocs par data node), adresse des data nodes, état du cluster HDFS de façon générale et état de fonctionnement. Si 2 name nodes et 1 tombe en panne, alors le 2eme passe de stand by à actif
+- **Name node** : master daemon, meta-données, annuaire (infos de distribution des fichiers). Page d'administration avec infos du name node (ex : cluster de l'EFREI) => noms des machines, capacité totale et utilisée, nb data nodes, vue des data nodes, nb de blocs par data node (en théorie même nb de blocs par data node), adresse des data nodes, état du cluster HDFS de façon générale et état de fonctionnement. Si 2 name nodes et 1 tombe en panne, alors le 2eme passe de stand by à actif. Stocke info, blocs de données, répartition dans les data nodes.
+
+- **Data node** : slave daemon, contient données
 
 - **Journal node** : propose haute disponibilité (HA) des name nodes pour qu'ils fonctionnent de façon synchronisée car on a besoin de bcp de réactivité en cas de dysfonctionnement d'un des name nodes, en terme de détection de panne de name node et de synchro des opérations, le name node passif sait où en est le name node actif
 
 - **ZKFC (Zoo Keeper Failover Controller)** : détecte si un name node est down
+
+- Couches les plus importantes de Hadoop : cluster **HDFS** (stockage, contient name node / secondary name node qui sont 2 daemons) et cluster **YARN**
+
+- **Cluster YARN** : alloue et orchestre ressources dans cluster Hadoop aux différentes applis. 2 daemon principaux :
+  - **Resource manager** : master daemon => alloue CPU et RAM sur chaque node manager, gère l'ensemble des node managers
+  - **Node manager** : slave daemon, gère ressource sur seulement ce noeud-là
 
 ## Apache HBase
 
