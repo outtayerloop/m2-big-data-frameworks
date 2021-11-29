@@ -38,6 +38,7 @@
                     <value>org.apache.hadoop.io.IntWritable</value>
                 </property>
             </configuration>
+            <archive>${jarPath}</archive>
         </map-reduce>
         <error to="fail"/>
     </action>
