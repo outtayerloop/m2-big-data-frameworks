@@ -97,7 +97,26 @@ To exit the PySpark console, simply type :
 exit()
 ```
 
-As the next steps will require more scripts we will not use the PySpark shell anymore. Also, as said in class, the spark-submit command does not work with the current cluster's configuration (it has issues with Spark context initialization) so we will do everything on Databricks for the next questions
+By submitting a job, we would use the following command (if the Python script was named ```basic.py```) :
+
+```shell
+spark-submit --master=yarn --py-files basic.py basic.py
+```
+
+Simplified output :
+```
+21/12/01 11:49:29 INFO storage.BlockManagerInfo: Added broadcast_1_piece0 in memory on hadoop-worker03.efrei.online:39477 (size: 4.7 KB, free: 366.3 MB)
+21/12/01 11:49:29 INFO storage.BlockManagerInfo: Added broadcast_1_piece0 in memory on hadoop-worker02.efrei.online:36796 (size: 4.7 KB, free: 366.3 MB)
+21/12/01 11:49:30 INFO storage.BlockManagerInfo: Added broadcast_0_piece0 in memory on hadoop-worker03.efrei.online:39477 (size: 34.6 KB, free: 366.3 MB)
+21/12/01 11:49:30 INFO storage.BlockManagerInfo: Added broadcast_0_piece0 in memory on hadoop-worker02.efrei.online:36796 (size: 34.6 KB, free: 366.3 MB)
+21/12/01 11:49:31 INFO scheduler.TaskSetManager: Finished task 1.0 in stage 0.0 (TID 1) in 1961 ms on hadoop-worker03.efrei.online (executor 1) (1/2)
+21/12/01 11:49:31 INFO python.PythonAccumulatorV2: Connected to AccumulatorServer at host: 127.0.0.1 port: 58662
+21/12/01 11:49:31 INFO scheduler.TaskSetManager: Finished task 0.0 in stage 0.0 (TID 0) in 2117 ms on hadoop-worker02.efrei.online (executor 2) (2/2)
+21/12/01 11:49:31 INFO cluster.YarnScheduler: Removed TaskSet 0.0, whose tasks have all completed, from pool
+21/12/01 11:49:31 INFO scheduler.DAGScheduler: ResultStage 0 (count at /home/wiem.chouchane/basic.py:8) finished in 2.170 s
+21/12/01 11:49:31 INFO scheduler.DAGScheduler: Job 0 finished: count at /home/wiem.chouchane/basic.py:8, took 2.247753 s
+('Number of lines : ', 97)
+```
 
 2.3 We will first create the Tree class :
 
@@ -139,7 +158,6 @@ class Tree(object):
             return self.fields[1]
         else:
             return None
-
 ```
 
 We will first use the ```reduce()``` function to compute the average height of trees :
@@ -159,6 +177,45 @@ Output :
 Out[110]: 22.3125
 ```
 
+With spark-submit, we would create a file named ```tree.py``` where we would put our class Tree and another file ```average.py``` with the following content :
+
+```python
+from tree import Tree
+
+from pyspark import SparkConf , SparkContext
+appName = 'lab3'
+conf = SparkConf().setAppName(appName)
+sc = SparkContext(conf=conf)
+
+# with reduce()
+trees_csv = sc.textFile('hdfs://efrei/user/wiem.chouchane/trees.csv')
+header = trees_csv.first()
+trees = trees_csv.filter(lambda line: line != header).map(lambda line: Tree(line)).filter(lambda tree: tree.get_height() is not None)
+tree_heights_sum = trees.map(lambda tree: tree.get_height()).reduce(lambda total, height: total + height)
+average_tree_height = tree_heights_sum / trees.count()
+print(average_tree_height)
+```
+
+And then we would submit our job with the following command :
+
+```shell
+spark-submit --master=yarn --py-files average.py,tree.py average.py
+```
+
+Simplified output :
+```
+21/12/01 11:56:20 INFO storage.BlockManagerInfo: Added broadcast_3_piece0 in memory on hadoop-worker02.efrei.online:37284 (size: 5.6 KB, free: 366.3 MB)
+21/12/01 11:56:20 INFO storage.BlockManagerInfo: Added broadcast_3_piece0 in memory on hadoop-worker01.efrei.online:43612 (size: 5.6 KB, free: 366.3 MB)
+21/12/01 11:56:20 INFO scheduler.TaskSetManager: Finished task 0.0 in stage 2.0 (TID 3) in 96 ms on hadoop-worker02.efrei.online (executor 2) (1/2)
+21/12/01 11:56:20 INFO scheduler.TaskSetManager: Finished task 1.0 in stage 2.0 (TID 4) in 144 ms on hadoop-worker01.efrei.online (executor 1) (2/2)
+21/12/01 11:56:20 INFO cluster.YarnScheduler: Removed TaskSet 2.0, whose tasks have all completed, from pool
+21/12/01 11:56:20 INFO scheduler.DAGScheduler: ResultStage 2 (count at /home/wiem.chouchane/average.py:13) finished in 0.150 s
+21/12/01 11:56:20 INFO scheduler.DAGScheduler: Job 2 finished: count at /home/wiem.chouchane/average.py:13, took 0.153032 s
+22.3125
+```
+
+(The mean is printed in the last line).
+
 The output is the same for the next 2 versions so it will not be included.
 
 Next we will use the ```sum()``` function to do the same thing :
@@ -168,7 +225,6 @@ Next we will use the ```sum()``` function to do the same thing :
 trees_csv = sc.textFile('/FileStore/tables/trees.csv')
 header = trees_csv.first()
 trees = trees_csv.filter(lambda line: line != header).map(lambda line: Tree(line)).filter(lambda tree: tree.get_height() is not None)
-tree_heights_sum = trees.map(lambda tree: tree.get_height()).reduce(lambda total, height: total + height)
 tree_heights_sum = trees.map(lambda tree: tree.get_height()).sum()
 average_tree_height = tree_heights_sum / trees.count()
 average_tree_height
