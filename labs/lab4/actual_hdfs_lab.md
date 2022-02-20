@@ -36,7 +36,7 @@ The ```teragen``` command generates rows of data to sort for the ```terasort``` 
 
 - Use the teragen command to generate 100MB data file
 
-As the ```teragen``` command expects a number of 100B rows, we will use 1 000 000 rows to reach 10MB data.
+As the ```teragen``` command expects a number of 100B rows, we will use 1 000 000 rows to reach 100MB data.
 
 ```
 [wiem.chouchane@hadoop-edge01 ~]$ yarn jar /usr/odp/current/hadoop-mapreduce-client/hadoop-mapreduce-examples.jar \
